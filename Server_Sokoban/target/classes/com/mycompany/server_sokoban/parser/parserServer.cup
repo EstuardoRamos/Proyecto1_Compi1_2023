@@ -1,0 +1,292 @@
+package com.mycompany.server_sokoban.parser;
+
+import com.mycompany.server_sokoban.errores.TablaDeErrores;
+import com.mycompany.server_sokoban.juego.*;
+import java.util.ArrayList;
+import java_cup.runtime.*;
+import java_cup.runtime.XMLElement;
+
+//class Parser;*/
+
+parser code {:
+
+    public parser(CounterLexer lexer) {
+        super(lexer);
+    }
+    private String xml;
+    private String xmlAux;
+
+    private World world;
+    private ArrayList<Casilla> boards;
+    private ArrayList<Casilla> boxes = new ArrayList<Casilla>();
+    private ArrayList<Casilla> targets=new ArrayList<Casilla>();
+    private ArrayList<Casilla> players;
+    private String nameWorld;
+    private Casilla player;
+    private int filas;
+    private int columnas;
+    private ArrayList<String> errores = new ArrayList<>();
+    private ArrayList<Token> TokensErrores = new ArrayList<>();
+    private ArrayList<Token> TokensErroresLexer = new ArrayList<>();
+
+    private TablaDeErrores tablaError = new TablaDeErrores();
+
+
+        public ArrayList<String> getErrores() {
+        return errores;
+    }
+    public int getCantidadErrores(){
+        int cantError= TokensErrores.size();
+        return cantError;
+    }
+
+    public String getWorld(){
+        return xml; 
+    }
+   /* public void syntax_error(Symbol s) {
+            tabla.agregarError(String.valueOf(s.value), s.left, s.right, "Sintactico", "Error de Sintaxis, se esperaba otro token");
+        }*/
+
+        public void syntax_error (Symbol s) {
+        Token tokenError = (Token) s.value; 
+        System.out.println("Error token Lexema: " + String.valueOf(s.value.toString()) + " | Linea: " + s.left + " | columna: " + s.right);
+        System.out.println("Error token Lexema: " + tokenError.getValue() + " | Linea: " + tokenError.getLine() + " | columna: " + tokenError.getColumna());
+        errores.add("Error Sintactico: Lexema: " +  tokenError.getValue() + " | Linea: " +  tokenError.getLine() + " | columna: " +  tokenError.getColumna());
+        TokensErrores.add(tokenError);
+    }
+
+
+    /*public Symbol scan() throws Exception {
+        Symbol sym = this.getScanner().next_token();
+        if (sym == null) {
+            return this.getSymbolFactory().newSymbol("END_OF_FILE", this.EOF_sym());
+        }
+
+        while(sym != null && sym.sym == ParserSym.SYM) {
+            this.report_expected_token_ids();
+            System.out.println("Ingorando: " + sym.value.toString());
+            sym = this.getScanner().next_token();
+        }
+
+        if (sym == null) {
+            return this.getSymbolFactory().newSymbol("END_OF_FILE", this.EOF_sym());
+        }
+
+        return sym;
+    }
+*/
+  
+:}
+
+terminal Token PLUS, MINUS, TIMES, DIVIDE, LPAREN, RPAREN, INTEGER;
+terminal Token COMILLAS, NAME, ROWS, COLS, CONFIG, BOX_COLOR,BOX_ON_TARGET_COLOR, TARGET_COLOR, BRICK_COLOR, HALL_COLOR, UNDEFINED_COLOR, PLAYER_COLOR, BOARD, POSX, POSY, TYPE, TARGETS, PLAYER, BOXES;
+terminal Token COMA, DOS_PUNTOS, LLAVE_ABRE, LLAVE_CIERRA, COR_ABRE, COR_CIERRA, PUNTO, STRING,  HEXADECIMAL, BRICK, HALL;
+terminal Token SYM, FLOOR, CEIL, ERROR;
+terminal Token DECIMAL;
+non terminal Integer expr1, expr2, expr3, expr4;
+non terminal ArrayList<Integer> operatorProd;
+non terminal Integer expr;
+non terminal s, s2, settings, config, propierties, atributes;
+non terminal Posicion box;
+non terminal ArrayList <Posicion> s3;
+non terminal ArrayList <Casilla> board;
+non terminal String opc_pos, typeC, opcBoard;
+non terminal Casilla sub; 
+//non terminal World atributes;
+start with s;
+s ::=   
+        LLAVE_ABRE s2 LLAVE_CIERRA                      {:
+                                                                if(boxes.size()!=targets.size()){
+                                                                        System.out.println("Error cajas y targes deben ser la misma cantidad");
+                                                                        
+                                                                }
+                                                                if(TokensErrores.size()>0){
+                                                                        for(String error: errores){
+                                                                                System.out.println(error);
+                                                                        }
+                                                                        xml=tablaError.mostrarErrores(TokensErrores);
+                                                                        }else{
+                                                                        System.out.println("\nSe creo un mundo con exito");
+                                                                        world = new World(nameWorld, filas, columnas, boards,boxes, targets,player );
+                                                                       // world.escribirJuego();
+                                                                        xml=world.convertirXML();
+                                                                        }  
+                                                                
+                                                                
+
+                                                        :}
+        | error LLAVE_CIERRA
+	;
+
+
+ s2 ::= 
+        s2 COMA atributes       {:       
+                                        System.out.println("varios atri");
+                                        //CREAAMOS UN METODO que verifique que no haya cajas atributos repetidos
+                                :}
+        |atributes              {: :}
+        |s2 error 
+        ;
+atributes ::= 
+        NAME  DOS_PUNTOS STRING:n 			{:
+                                                                System.out.println("se definio un nombre1"+n.getValue()); nameWorld=n.getValue(); nameWorld=nameWorld.substring(1,nameWorld.length()-1); RESULT=nameWorld;
+                                                                if(nameWorld != null){
+                                                                        System.out.println("Error ya ha sido definido un nombre, no pude venir este artributo dos veces");
+                                                                } 
+                                                        :} 
+	|ROWS  DOS_PUNTOS expr:rows                     {:
+                                                                System.out.println("se definio un row"); filas=rows; RESULT=rows; 
+                                                                if(filas != 0){
+                                                                        System.out.println("Error ya ha sido definido un rows, no pude venir este artributo dos veces");
+                                                                } 
+                                                        :}
+	|COLS  DOS_PUNTOS expr:n1                       {:
+                                                                System.out.println("se definio un columnas "); columnas=n1; RESULT=n1;
+                                                                if(columnas != 0){
+                                                                        System.out.println("Error ya ha sido definido un cols, no pude venir este artributo dos veces");
+                                                                }
+                                                        :}
+ 	|CONFIG DOS_PUNTOS config			        {:
+                                                                        System.out.println("se configuro ");
+                                                                        
+                                                                :} //clase config
+ 	|BOARD DOS_PUNTOS COR_ABRE board:lista COR_CIERRA       {:
+                                                                        System.out.println("<board>"+"</board> ");
+                                                                        boards = lista;
+                                                                :} //arreglo de boards
+ 	|opc_pos:o DOS_PUNTOS COR_ABRE s3:lista COR_CIERRA	{:
+                                                                        System.out.println("posiones \n");
+                                                                        for (int i=0;i<lista.size();i++) {
+                                                                                if (o =="boxes"){
+                                                                                        Casilla casila = new Casilla(lista.get(i).getPosX(),lista.get(i).getPosY(), "boxes");
+                                                                                        boxes.add(casila);
+                                                                                        System.out.println("Ingresamos boxes");
+                                                                                }else if(o=="targets"){
+                                                                                        Casilla casila = new Casilla(lista.get(i).getPosX(),lista.get(i).getPosY(), "targets");
+                                                                                        targets.add(casila);
+                                                                                        System.out.println("Ingresamos targests");
+                                                                                }
+                                                                        }
+                                                                :}
+        |PLAYER DOS_PUNTOS LLAVE_ABRE box:p LLAVE_CIERRA          {:
+                                                                        
+                                                                        player=new Casilla(p.getPosX(), p.getPosY(), "player");
+                                                                :}               //casill jugadpr
+        |error COR_CIERRA
+ 	|error LLAVE_CIERRA
+        ;
+
+
+config ::=
+        LLAVE_ABRE settings  LLAVE_CIERRA
+        ;
+settings::=                                                     //Devolvemos un arreglo de tokens 
+        settings:arreglo COMA propierties DOS_PUNTOS HEXADECIMAL      {:
+                                                                                /*if(p != null){
+                                                                                        arreglo.add(p);
+                                                                                }
+                                                                                RESULT=arreglo;*/
+                                                                        :}             
+        |propierties DOS_PUNTOS HEXADECIMAL
+        ;
+propierties::=  		
+	|BOX_COLOR:p                                              {:RESULT=p;:}
+        |BOX_ON_TARGET_COLOR:p                                    {:RESULT=p;:}
+	|TARGET_COLOR:p                                           {:RESULT=p;:}
+	|BRICK_COLOR:p                                            {:RESULT=p;:}
+	|HALL_COLOR:p                                             {:RESULT=p;:}
+	|UNDEFINED_COLOR:p                                        {:RESULT=p;:}
+	|PLAYER_COLOR:p                                           {:RESULT=p;:}
+	;
+	
+board ::=                                               //devolvera un arreglo de casillas
+        board:arreglo COMA LLAVE_ABRE sub:s LLAVE_CIERRA          {:
+                                                                        if(s != null){
+                                                                                arreglo.add(s);
+                                                                        }
+                                                                        RESULT=arreglo;
+                                                                :}    
+	|LLAVE_ABRE sub:s LLAVE_CIERRA                          {:
+                                                                        RESULT=new ArrayList<Casilla>();
+                                                                        if(s != null){
+                                                                                RESULT.add(s);
+                                                                        }
+                                                                :}
+        |error LLAVE_CIERRA 
+                                ;
+
+sub ::=                         //devolmvemos una casilla
+        box:p COMA typeC:t                      {:      RESULT= new Casilla(p.getPosX(), p.getPosY(), t);:}
+	|typeC:t COMA box:p                     {:
+                                                        RESULT= new Casilla(p.getPosX(), p.getPosY(), t);
+
+                                               :}  
+        |error typeC       //creamos un arreglo de pos y agregamos la pos c o y
+	|error box
+        ;
+	
+typeC ::=                    //retornamos la expr que es pos x            
+	TYPE DOS_PUNTOS opcBoard:opc              {:RESULT=opc; :} //retornamos el type del board puede ser hall o brick
+        ;
+
+opcBoard ::= 
+        BRICK                                   {:RESULT="BRICK";:}
+        |HALL                                   {:RESULT="HALL";:}
+        ;
+	
+opc_pos ::= 
+        BOXES:b                 {:RESULT="boxes";:}
+	|TARGETS:t              {:RESULT="targets";:}
+	;
+s3 ::= 
+        s3:arrayPos COMA LLAVE_ABRE box:xys LLAVE_CIERRA             {:
+                                                                        if(xys != null){
+                                                                                arrayPos.add(xys);
+                                                                        }
+                                                                        RESULT=arrayPos;
+                                                                     :}//se hace un arreglo de cajas
+        |LLAVE_ABRE box:xys LLAVE_CIERRA                    {:
+                                                                System.out.println("Creamos una caja"); 
+                                                                RESULT=new ArrayList<Posicion>();
+                                                                if(xys != null){
+                                                                        RESULT.add(xys);
+                                                                }
+                                                            :}
+        ;
+	
+box ::=                                                 //Devolvemos una posicion
+        POSX DOS_PUNTOS expr:x COMA POSY DOS_PUNTOS expr:y  {:System.out.println("<posX> "+x+"<posX>"+"\n <posY>"+y+"</posY>");
+                                                                RESULT= new Posicion(x, y);
+                                                            :}
+	|POSY DOS_PUNTOS expr:y COMA POSX DOS_PUNTOS expr:x {:System.out.println("<posY> "+y+"<posY>"+"\n <posX>"+x+"</posX>"); RESULT= new Posicion(x, y);:}
+        ;  	 
+
+
+expr ::= 
+        COMILLAS expr1:n COMILLAS                           {:System.out.println(n); RESULT=n;:}
+        |expr4:n                                            {:RESULT=n;:}                            
+        ;
+
+expr1 ::=
+       expr1:n1 PLUS expr2:n2 {: RESULT = n1 + n2; :}
+        |expr1:n1 MINUS expr2:n2 {: RESULT = n1 - n2; :}
+        | expr2:n1 {: RESULT = n1; :}
+        ;
+
+expr2 ::=
+        expr2:n1 TIMES expr3:n2 {: RESULT = n1 * n2; :}
+        | expr2:n1 DIVIDE expr3:n2 {: RESULT = n1 / n2; :}
+        |expr3:n1 {: RESULT = n1; :}
+        ;
+
+expr3 ::=
+        MINUS expr4:n1 {: RESULT = -1 * n1; :}
+        |expr4:n1 {: RESULT = n1; :}
+        ;
+
+expr4 ::=
+        INTEGER:n1 {: RESULT = Integer.valueOf(n1.getValue()); :}
+        |LPAREN expr1:n1 RPAREN {: RESULT = n1; :}
+        |FLOOR LPAREN DECIMAL:n1 RPAREN    {:RESULT=(int) Math.floor(Double.parseDouble(n1.getValue())); :}
+        |CEIL LPAREN DECIMAL:n1 RPAREN     {:RESULT=(int) Math.ceil(Double.parseDouble(n1.getValue()));:}
+        ;

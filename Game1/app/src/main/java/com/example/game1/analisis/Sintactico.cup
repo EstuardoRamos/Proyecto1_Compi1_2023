@@ -1,0 +1,170 @@
+package com.example.game1.analisis;
+
+
+import com.example.game1.errores.TablaDeErrores;
+import com.example.game1.game.Casilla;
+import com.example.game1.game.Posicion;
+import com.example.game1.game.World;
+import com.example.game1.parse.Token;
+
+import java.util.ArrayList;
+import java_cup.runtime.*;
+
+//class Parser;*/
+
+parser code {:
+
+    public parser(CounterLexer lexer) {
+        super(lexer);
+    }
+    private String xml;
+    private String xmlAux;
+
+    private World world;
+    private ArrayList<Casilla> boards=new ArrayList<Casilla>();;
+    private ArrayList<Casilla> boxes = new ArrayList<Casilla>();
+    private ArrayList<Casilla> targets=new ArrayList<Casilla>();
+    private ArrayList<Casilla> players;
+    private String nameWorld;
+    private Casilla player;
+    private int filas;
+    private int columnas;
+    private ArrayList<String> errores = new ArrayList<>();
+    private ArrayList<Token> TokensErrores = new ArrayList<>();
+
+    private TablaDeErrores tabla = new TablaDeErrores();
+
+
+        public ArrayList<String> getErrores() {
+        return errores;
+    }
+   /* public void syntax_error(Symbol s) {
+            tabla.agregarError(String.valueOf(s.value), s.left, s.right, "Sintactico", "Error de Sintaxis, se esperaba otro token");
+        }*/
+
+        public void syntax_error (Symbol s) {
+        Token tokenError = (Token) s.value; 
+        System.out.println("Error token Lexema: " + String.valueOf(s.value.toString()) + " | Linea: " + s.left + " | columna: " + s.right);
+        System.out.println("Error token Lexema: " + tokenError.getValue() + " | Linea: " + tokenError.getLine() + " | columna: " + tokenError.getColumn());
+        errores.add("Error Sintactico: Lexema: " + tokenError.getValue() + " | Linea: " + tokenError.getLine() + " | columna: " + tokenError.getColumn());
+        TokensErrores.add(tokenError);
+    }
+
+  
+:}
+
+terminal Token INTEGER, HEAD, CADENA;
+terminal Token  NAME,NAME_C,  ROWS, ROWS_C, COLS, COLS_C, CONFIG, CONFIG_C, BOX_COLOR,BOX_COLOR_C, BOX_ON_TARGET_COLOR , BOX_ON_TARGET_COLOR_C, TARGET_COLOR,TARGET_COLOR_C, BRICK_COLOR, BRICK_COLOR_C, HALL_COLOR, HALL_COLOR_C,  UNDEFINED_COLOR,  UNDEFINED_COLOR_C, PLAYER_COLOR, PLAYER_COLOR_C, BOARD, BOARD_C, POSX, POSX_C, POSY, POSY_C, TYPE, TYPE_C, TARGETS, TARGETS_C, PLAYER, PLAYER_C, BOXES, BOXES_C;
+terminal Token COMA, DOS_PUNTOS, PUNTO_COMA, LLAVE_ABRE, LLAVE_CIERRA, COR_ABRE, COR_CIERRA, PUNTO, STRING, ENTERO,  HEXADECIMAL, BRICK, HALL;
+terminal Token SYM, FLOOR, CEIL, ERROR, COMILLAS, DECIMAL, WORLD, WORLD_C;
+terminal Token ERRORS,ERRORS_C,  ERROR_X,  VALUE, VALUE_C, LINE,  LINE_C, COLUMN, COLUMN_C, ERROR_X_C ;
+non terminal Integer a, b, c, d;
+non terminal ArrayList<Integer> operatorProd;
+non terminal Integer expr;
+non terminal World s;
+non terminal s2, settings, config, s3, s4, propierties, atributes, head, targets, boxes ;
+non terminal prod_errores, tok_error, list_error, val, typeI, line, col;
+non terminal Posicion pos;
+//non terminal ArrayList <Posicion> s3;
+//non terminal ArrayList <Casilla>   ;
+non terminal String opc_pos, type, opc_bh;
+non terminal Casilla sub, box,board, target; 
+//non terminal world atributes;
+start with s;
+
+
+s ::= HEAD WORLD atributes WORLD_C                  {:
+                                                    for(Casilla board:boxes){board.infoCasilla();}
+                                                    world = new World(nameWorld, filas, columnas, null, boards, boxes, targets, player);
+                                                    world.escribirJuego();
+                                                    if(world!=null){
+                                                        RESULT=world;
+                                                    }
+                                                :}
+        |HEAD prod_errores                      {:System.out.println("se estan recibiendo errores");:}
+        ;
+prod_errores::=
+         ERRORS list_error ERRORS_C
+         ;
+list_error ::= list_error tok_error  
+        |tok_error
+        ;         
+
+tok_error::= 
+        ERROR_X  
+        val      
+        ERROR_X_C 
+        ;
+val ::= VALUE CADENA VALUE_C typeI         
+        ;
+typeI ::= 
+         TYPE  INTEGER TYPE_C line
+        ;
+line ::=
+         LINE INTEGER LINE_C col
+        ;
+
+col::= 
+          COLUMN INTEGER COLUMN_C
+        ;
+
+atributes::=
+         s2 atributes
+        |s2
+        |error 
+        ;
+
+s2 ::= NAME STRING:s NAME_C                       {:nameWorld=s.getValue();:}
+    |ROWS INTEGER:n ROWS_C                        {:filas=Integer.valueOf(n.getValue());:}
+    |COLS INTEGER:n COLS_C                        {:columnas=Integer.valueOf(n.getValue());:}
+    |config                  {::}   
+    |board:c                                     {:boards.add(c);:}
+    |box:c                                       {:boxes.add(c); :}
+    |target:c                                    {:targets.add(c);:}
+    |PLAYER pos:p PLAYER_C                       {:player = new Casilla(p.getPosX(), p.getPosY(), "player","n");:}
+    ;
+
+//config debe de generara los colores 
+config ::= 
+        CONFIG s4  CONFIG_C
+        ;
+s4::= 
+     s3
+    |s3 s4
+    ;
+
+s3 ::= 
+        BOX_COLOR  HEXADECIMAL BOX_COLOR_C                                         //  {: System.out.println("hola"); RESULT=p;:}
+    	|BOX_ON_TARGET_COLOR HEXADECIMAL BOX_ON_TARGET_COLOR_C                             //    {:RESULT=p;:}
+	    |TARGET_COLOR HEXADECIMAL  TARGET_COLOR_C                                        // {:RESULT=p;:}
+	    |BRICK_COLOR  HEXADECIMAL  BRICK_COLOR_C                           //{:RESULT=p;:}
+	    |HALL_COLOR HEXADECIMAL    HALL_COLOR_C                              //               {:RESULT=p;:}
+	    |UNDEFINED_COLOR HEXADECIMAL UNDEFINED_COLOR_C                         //              {:RESULT=p;:}
+	    |PLAYER_COLOR  HEXADECIMAL PLAYER_COLOR_C                                //         {:RESULT=p;:}
+	;
+
+
+
+board ::=  //arreglo de casillas tipo hall o BRICK
+         BOARD pos:p type:t BOARD_C                    {:RESULT=new Casilla(p.getPosX(), p.getPosY(), t, "n");:} 
+        ;
+
+box ::= //arrglo de casilla tipp boxes
+        BOXES pos:p BOXES_C                     {:RESULT=new Casilla(p.getPosX(), p.getPosY(), "boxes", "n");:}
+        ;
+    
+target ::= //arreglo de casilla tipo target
+        TARGETS pos:p TARGETS_C                       {:RESULT=new Casilla(p.getPosX(), p.getPosY(), "targets", "n");:}
+        ;
+pos ::= 
+         POSX INTEGER:x POSX_C POSY INTEGER:y POSY_C        {:RESULT= new Posicion(Integer.valueOf(x.getValue()),Integer.valueOf(y.getValue()));:}
+        |POSY INTEGER:y POSY_C POSX INTEGER:x POSX_C        {:RESULT= new Posicion(Integer.valueOf(y.getValue()),Integer.valueOf(x.getValue()));:}
+        ;
+
+type ::= 
+        TYPE opc_bh:o TYPE_C                       {:RESULT=o;:}
+        ;
+opc_bh ::= 
+        BRICK:b                                   {:RESULT=b.getValue();:}
+        |HALL:b                                   {:RESULT=b.getValue();:}
+        ;

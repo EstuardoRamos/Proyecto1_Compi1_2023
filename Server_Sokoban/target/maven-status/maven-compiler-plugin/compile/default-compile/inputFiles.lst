@@ -1,0 +1,15 @@
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/parser/sym.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/parser/MainPrueba.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/parser/NumeroLinea.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/juego/Config.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/errores/Error.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/errores/TablaDeErrores.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/parser/parser.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/parser/CounterLexer.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/errores/Errors.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/errores/Main.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/juego/World.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/parser/Convert_JSON_TO_XML.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/parser/Token.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/juego/Posicion.java
+/home/estuardo/NetBeansProjects/Server_Sokoban/src/main/java/com/mycompany/server_sokoban/juego/Casilla.java
